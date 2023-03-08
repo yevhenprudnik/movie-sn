@@ -1,12 +1,31 @@
-import { FastifyPluginAsync } from 'fastify';
+import * as Schemas from './schemas';
+import { MovieService } from './../../services/movie.service';
+import { FastifyPluginAsync, FastifyRequest } from 'fastify';
 
-const movieRoutes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
-  fastify.get('/', async function (request, reply) {
-    const db = fastify.mongo.client.db();
+type GetByIdRequest = FastifyRequest<{
+  Params: { id: string };
+}>;
 
-    const moviesCollection = db.collection('movies');
+const movieRoutes: FastifyPluginAsync = async (
+  fastify,
+  opts
+): Promise<void> => {
+  const service = new MovieService(fastify.mongo.client.db());
 
-    return moviesCollection.find().toArray();;
+  fastify.get('/', async (request, reply) => {
+    return service.findAll();
+  });
+
+  fastify.get(
+    '/:id',
+    Schemas.getMovie,
+    async (request: GetByIdRequest, reply) => {
+      return service.findById(request.params.id);
+    }
+  );
+
+  fastify.get('/search', async (request, reply) => {
+    return service.find(request.query as any);
   });
 };
 
