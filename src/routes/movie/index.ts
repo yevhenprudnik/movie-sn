@@ -1,5 +1,10 @@
+import * as Schemas from './schemas';
 import { MovieService } from './../../services/movie.service';
-import { FastifyPluginAsync } from 'fastify';
+import { FastifyPluginAsync, FastifyRequest } from 'fastify';
+
+type GetByIdRequest = FastifyRequest<{
+  Params: { id: string };
+}>;
 
 const movieRoutes: FastifyPluginAsync = async (
   fastify,
@@ -11,11 +16,13 @@ const movieRoutes: FastifyPluginAsync = async (
     return service.findAll();
   });
 
-  fastify.get('/:id', async (request, reply) => {
-    const params: any = request.params;
-
-    return service.findById(params.id);
-  });
+  fastify.get(
+    '/:id',
+    Schemas.getMovie,
+    async (request: GetByIdRequest, reply) => {
+      return service.findById(request.params.id);
+    }
+  );
 
   fastify.get('/search', async (request, reply) => {
     return service.find(request.query as any);
